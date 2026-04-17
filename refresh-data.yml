@@ -1,0 +1,39 @@
+name: Refresh Dashboard Data
+
+on:
+  schedule:
+    - cron: '*/30 * * * *'   # every 30 minutes — same as GIM dashboard
+  workflow_dispatch:          # manual trigger from Actions tab
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm install xlsx node-fetch
+
+      - name: Fetch data from SharePoint
+        # Same secrets as the GIM dashboard — no new secrets needed
+        env:
+          TENANT_ID:     ${{ secrets.TENANT_ID }}
+          CLIENT_ID:     ${{ secrets.CLIENT_ID }}
+          CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
+          FILE_NAME:     "Weekly_Figures_2026.xlsx"
+        run: node fetch-data.js
+
+      - name: Commit updated data.json
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data.json
+          git diff --staged --quiet || git commit -m "Refresh $(date -u '+%Y-%m-%d %H:%M UTC')"
+          git push
