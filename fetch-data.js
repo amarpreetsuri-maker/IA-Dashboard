@@ -67,8 +67,9 @@ async function main() {
   const drivesData = await drivesResp.json();
   console.log('Available drives:', drivesData.value?.map(d => d.name));
 
-  const drive = drivesData.value?.find(d =>
+ const drive = drivesData.value?.find(d =>
     d.name === 'Documents' || d.name === 'Shared Documents' ||
+    d.name === 'GIM' || d.name === 'General Insurance and Medical' ||
     (d.webUrl || '').includes('Shared%20Documents') ||
     (d.webUrl || '').includes('Shared Documents')
   );
