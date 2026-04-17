@@ -58,7 +58,7 @@ async function main() {
   const siteId = siteData.id;
   console.log('✓ Site ID:', siteId);
 
-  // ── 3. Drive (identical to GIM dashboard) ────────────────────────────────
+  // ── 3 & 4. Search every drive for the file ──────────────────────────────
   console.log('Listing drives...');
   const drivesResp = await fetch(
     `https://graph.microsoft.com/v1.0/sites/${siteId}/drives`,
@@ -67,34 +67,31 @@ async function main() {
   const drivesData = await drivesResp.json();
   console.log('Available drives:', drivesData.value?.map(d => d.name));
 
- const drive = drivesData.value?.find(d =>
-    d.name === 'Documents' || d.name === 'Shared Documents' ||
-    d.name === 'GIM' || d.name === 'General Insurance and Medical' ||
-    (d.webUrl || '').includes('Shared%20Documents') ||
-    (d.webUrl || '').includes('Shared Documents')
-  );
-  if (!drive) {
-    console.error('Could not find Documents drive. Drives:', JSON.stringify(drivesData.value?.map(d => ({ name: d.name, id: d.id }))));
+  // Try every drive until the file is found
+  let downloadUrl = null;
+  for (const drive of (drivesData.value || [])) {
+    console.log(`Searching drive: ${drive.name}...`);
+    const fileResp = await fetch(
+      `https://graph.microsoft.com/v1.0/drives/${drive.id}/root:/${FILE_NAME}`,
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+    const fileData = await fileResp.json();
+    if (fileData['@microsoft.graph.downloadUrl']) {
+      console.log(`Found in drive: ${drive.name}`);
+      downloadUrl = fileData['@microsoft.graph.downloadUrl'];
+      break;
+    }
+    console.log(`  Not in ${drive.name}`);
+  }
+  if (!downloadUrl) {
+    console.error(`File "${FILE_NAME}" not found in any drive. Check the exact filename on SharePoint.`);
     process.exit(1);
   }
-  console.log('✓ Using drive:', drive.name, drive.id);
-
-  // ── 4. File (just the filename differs from GIM) ──────────────────────────
-  console.log(`Getting file: ${FILE_NAME}...`);
-  const fileResp = await fetch(
-    `https://graph.microsoft.com/v1.0/drives/${drive.id}/root:/${FILE_NAME}`,
-    { headers: { Authorization: `Bearer ${token}` } }
-  );
-  const fileData = await fileResp.json();
-  if (!fileData['@microsoft.graph.downloadUrl']) {
-    console.error('File error:', JSON.stringify(fileData));
-    process.exit(1);
-  }
-  console.log('✓ Download URL obtained');
+  console.log('Download URL obtained');
 
   // ── 5. Download ───────────────────────────────────────────────────────────
   console.log('Downloading...');
-  const dlResp = await fetch(fileData['@microsoft.graph.downloadUrl']);
+  const dlResp = await fetch(downloadUrl);
   const buf    = await dlResp.arrayBuffer();
   console.log('✓ File size:', (buf.byteLength / 1024).toFixed(1), 'KB');
 
