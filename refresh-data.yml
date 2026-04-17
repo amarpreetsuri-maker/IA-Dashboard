@@ -2,7 +2,7 @@ name: Refresh Dashboard Data
 
 on:
   schedule:
-    - cron: '*/30 * * * *'   # every 30 minutes — same as GIM dashboard
+    - cron: '0 */4 * * *'   # every 4 hours
   workflow_dispatch:          # manual trigger from Actions tab
 
 jobs:
