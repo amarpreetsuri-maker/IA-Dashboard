@@ -191,7 +191,8 @@ function parseGIM(rows) {
     }
     if (weeks.length) brokers.push({ name, weeks });
   }
-  return brokers;
+  const skipNames = new Set(['Alpha Others','PB-Others','TH-Others','SVN-Others','Akhil Others','Others','Prinden Others','Sonny Ridgewell  Others']);
+  return brokers.filter(b => b.team !== 'GIM (via IA)' && !skipNames.has(b.name.trim()));
 }
 
 function parseIA(rows) {
