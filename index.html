@@ -135,7 +135,7 @@ function filterWeeks(broker){
 function brokerTotal(broker,key){return filterWeeks(broker).reduce((s,w)=>s+(w[key]||0),0);}
 function filteredBrokers(){
   let rows=[...RAW];
-  rows=rows.filter(r=>!SKIP_NAMES.has(r.name.trim())&&r.team!=='GIM (via IA)');
+  rows=rows.filter(r=>!SKIP_NAMES.has(r.name.trim())&&r.team.indexOf('GIM')===-1);
   if(GROUPED&&state.team!=='All') rows=rows.filter(r=>r.team===state.team);
   if(state.broker!=='All') rows=rows.filter(r=>r.name===state.broker);
   return rows;
