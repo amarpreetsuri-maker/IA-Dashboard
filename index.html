@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Seven Insurance — IA Life — Invoicing &amp; Revenue 2026</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:auto;overflow:visible;font-family:'Segoe UI',system-ui,sans-serif;background:#f4f6fb;color:#1a1d2e}
+.db{padding:16px}
+.hdr{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px}
+.hdr-left h1{font-size:20px;font-weight:700;letter-spacing:-.3px}
+.hdr-left p{font-size:11px;color:#6b7290;margin-top:2px}
+.hdr-right{display:flex;align-items:center;gap:10px}
+.ts{font-size:10px;color:#8a91b0;white-space:nowrap}
+.refresh-btn{display:flex;align-items:center;gap:5px;padding:6px 14px;border-radius:8px;border:1.5px solid #d0d4e8;background:#fff;font-size:11px;cursor:pointer;color:#4a5280;font-family:inherit;transition:all .15s}
+.refresh-btn:hover{background:#eef0ff}
+.refresh-btn.spinning .rb-ic{display:inline-block;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.kpi-row{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:14px}
+.kpi{background:#fff;border-radius:12px;border:1.5px solid #e0e4f0;padding:16px 20px}
+.kpi-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#6b7290;margin-bottom:6px}
+.kpi-val{font-size:26px;font-weight:700;letter-spacing:-.5px}
+.kpi-sub{font-size:11px;color:#8a91b0;margin-top:3px}
+.filters{background:#fff;border-radius:12px;border:1.5px solid #e0e4f0;padding:14px 18px;margin-bottom:14px}
+.f-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#6b7290;margin-bottom:10px}
+.f-row{display:flex;gap:14px;align-items:flex-end;flex-wrap:wrap}
+.f-group{display:flex;flex-direction:column;gap:4px}
+.f-label{font-size:10px;color:#8a91b0;font-weight:600;letter-spacing:.05em}
+select{padding:6px 10px;border-radius:8px;border:1.5px solid #d0d4e8;font-size:12px;background:#f4f6fb;color:#2a3a6a;cursor:pointer;outline:none;font-family:inherit;min-width:130px}
+.view-tabs{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap}
+.view-tab{padding:7px 16px;border-radius:9px;border:1.5px solid #d0d4e8;background:#fff;font-size:12px;font-weight:600;cursor:pointer;color:#4a5280;transition:all .15s;font-family:inherit}
+.view-tab.active{color:#fff;}
+.panel{background:#fff;border-radius:12px;border:1.5px solid #e0e4f0;padding:18px 20px}
+.legend{display:flex;gap:16px;margin-bottom:14px;font-size:11px;color:#6b7290;flex-wrap:wrap}
+.leg-dot{width:10px;height:10px;border-radius:2px;display:inline-block;margin-right:4px;vertical-align:middle}
+.no-data{text-align:center;padding:40px;color:#8a91b0;font-size:13px}
+.group-hdr{border-radius:7px;padding:7px 12px;margin:14px 0 6px;font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;display:flex;justify-content:space-between;align-items:center}
+.bar-row{display:flex;align-items:center;gap:10px;padding:3px 4px;border-radius:6px;margin-bottom:5px}
+.bar-row:hover{background:#f4f6fb}
+.bar-name{width:200px;font-size:12px;text-align:right;color:#2a3a6a;flex-shrink:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bar-track{flex:1;height:24px;background:#eef0f8;border-radius:5px;overflow:hidden}
+.bar-fill{height:100%;border-radius:5px}
+.bar-val{font-size:12px;font-weight:700;width:90px;text-align:right;flex-shrink:0}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{text-align:left;padding:8px 10px;border-bottom:2px solid #e4e8f4;color:#6b7290;font-size:10px;text-transform:uppercase;letter-spacing:.06em;font-weight:700;white-space:nowrap;cursor:pointer;user-select:none}
+td{padding:8px 10px;border-bottom:1px solid #f0f2f8;color:#1a1d2e}
+tr:hover td{background:#f7f9ff}
+.num{text-align:right;font-variant-numeric:tabular-nums}
+.badge{display:inline-block;padding:2px 7px;border-radius:20px;font-size:10px;font-weight:600}
+tfoot td{font-weight:700;padding:8px 10px}
+.chart-wrap{position:relative;width:100%;height:240px;margin-top:12px}
+.warn-banner{background:#fff8e8;border:1.5px solid #e8d88a;border-radius:10px;padding:8px 16px;margin-bottom:12px;font-size:11px;color:#7a5a0a;display:flex;justify-content:space-between;align-items:center;gap:12px}
+
+.view-tab.active{background:#6b21a8;border-color:#6b21a8}
+.group-hdr{background:#6b21a818;color:#6b21a8}
+.badge{background:#6b21a818;color:#6b21a8}
+tfoot td{background:#6b21a810;color:#0d1b3e}
+</style>
+</head>
+<body>
+<div class="db" id="app">
+  <div class="hdr">
+    <div class="hdr-left">
+      <h1 style="color:#6b21a8">IA Life — Invoicing &amp; Revenue</h1>
+      <p>Seven Insurance Brokers LLC &middot; Life Division &middot; 2026</p>
+    </div>
+    <div class="hdr-right">
+      <span class="ts" id="lastUpdated">Loading&hellip;</span>
+      <button class="refresh-btn" id="refreshBtn" onclick="loadData()"><span class="rb-ic">&#8635;</span>&nbsp;<span class="rb-lbl">Refresh</span></button>
+    </div>
+  </div>
+  <div class="kpi-row"><div class="kpi"><div class="kpi-label">Total Invoicing</div><div class="kpi-val" id="k2" style="color:#6b21a8">&#8212;</div><div class="kpi-sub" id="k2s"></div></div><div class="kpi"><div class="kpi-label">Total Revenue</div><div class="kpi-val" id="k3" style="color:#0d6e3f">&#8212;</div><div class="kpi-sub" id="k3s"></div></div><div class="kpi"><div class="kpi-label">Total Sales (Written)</div><div class="kpi-val" id="k1" style="color:#0d1b3e">&#8212;</div><div class="kpi-sub" id="k1s"></div></div></div>
+  <div class="filters">
+    <div class="f-title">Filters</div>
+    <div class="f-row">
+      <div class="f-group"><div class="f-label">Month</div><select id="monthSel"></select></div>
+      <div class="f-group"><div class="f-label">Week</div><select id="weekSel"></select></div>
+      
+      <div class="f-group"><div class="f-label">Team</div><select id="teamSel"></select></div>
+      <div class="f-group"><div class="f-label">Broker</div><select id="brokerSel"></select></div>
+    </div>
+  </div>
+  <div class="view-tabs" id="viewTabs"></div>
+  <div class="panel" id="panel"></div>
+</div>
+<script>
+// ── Height sync ──────────────────────────────────────────────────────────────
+function sendHeight(){
+  const h=Math.max(document.body.scrollHeight,document.documentElement.scrollHeight,document.body.offsetHeight);
+  window.parent.postMessage({type:'resize',height:h},'*');
+}
+window.addEventListener('load',sendHeight);
+window.addEventListener('resize',sendHeight);
+const _mo=new MutationObserver(()=>sendHeight());
+document.addEventListener('DOMContentLoaded',()=>_mo.observe(document.body,{childList:true,subtree:true}));
+
+// ── Constants ────────────────────────────────────────────────────────────────
+const MONTHS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const SHEET='ia';
+const REV_KEY='trails';
+const ACCENT='#6b21a8';
+const REV_COLOR='#0d6e3f';
+const INV_LABEL='Issued Cases Gross (Invoicing)';
+const REV_LABEL='Trails & Fees (Revenue)';
+const GROUPED=true;
+const TEAM_ORDER=['Alpha','APW','Prinden','PB Team','SVN Capital','Joe Barnaby','Abacus','Individual','Akhil','Other'];
+const SKIP_NAMES=new Set(['Alpha Others','PB-Others','TH-Others','SVN-Others','Akhil Others','Others','Prinden Others','Sonny Ridgewell  Others']);
+
+// ── Data ─────────────────────────────────────────────────────────────────────
+const FALLBACK={"gim":[{"name":"General & Medical - Aaron ","weeks":[{"date":"2026-01-09","sales":14356.26,"inv":-128.2,"rev":1432.94},{"date":"2026-01-16","sales":410.78,"inv":1071.92,"rev":5234.48},{"date":"2026-01-23","sales":17314.28,"inv":3441.47,"rev":31846.35},{"date":"2026-01-30","sales":5153.0,"inv":825.35,"rev":2750.39},{"date":"2026-02-06","sales":183.11,"inv":29950.46,"rev":2092.48},{"date":"2026-02-13","sales":41879.45,"inv":771.49,"rev":5815.88},{"date":"2026-02-20","sales":9195.69,"inv":4286.03,"rev":631.94},{"date":"2026-02-27","sales":185.48,"inv":-24.06,"rev":2433.53},{"date":"2026-03-06","sales":65.98,"inv":12572.25,"rev":3594.29},{"date":"2026-03-13","sales":618.7,"inv":3576.23,"rev":3965.1},{"date":"2026-03-27","sales":15162.99,"inv":7025.29,"rev":15344.73},{"date":"2026-04-03","sales":884.33,"inv":1051.56,"rev":2248.16},{"date":"2026-04-10","sales":1550.18,"inv":1369.27,"rev":8710.62},{"date":"2026-04-17","sales":945.5,"inv":5153.07,"rev":1487.67}]},{"name":"General & Medical - Abacus","weeks":[{"date":"2026-01-16","sales":0,"inv":577.04,"rev":0.0},{"date":"2026-01-23","sales":0,"inv":0.0,"rev":2821.35},{"date":"2026-02-06","sales":0,"inv":-1996.83,"rev":0.0},{"date":"2026-02-20","sales":0,"inv":0.0,"rev":576.65},{"date":"2026-03-06","sales":0,"inv":-6120.63,"rev":0.0},{"date":"2026-03-13","sales":0,"inv":0.0,"rev":16712.24},{"date":"2026-04-03","sales":0,"inv":0.0,"rev":218131.34},{"date":"2026-04-10","sales":0,"inv":0.0,"rev":11165.76}]},{"name":"General & Medical - Akhil Team ","weeks":[{"date":"2026-01-16","sales":0,"inv":0.0,"rev":7901.23}]},{"name":"General & Medical - APW","weeks":[{"date":"2026-01-23","sales":0,"inv":42.39,"rev":0.0},{"date":"2026-03-27","sales":0,"inv":-12.0,"rev":0.0},{"date":"2026-04-10","sales":0,"inv":13.97,"rev":87.48},{"date":"2026-04-17","sales":0,"inv":-11.6,"rev":0.0}]},{"name":"General & Medical - Boyd ","weeks":[{"date":"2026-01-09","sales":9240.0,"inv":10.12,"rev":22939.68},{"date":"2026-01-16","sales":252.0,"inv":21643.97,"rev":0.0},{"date":"2026-01-23","sales":100855.4,"inv":5219.14,"rev":5123.71},{"date":"2026-01-30","sales":8791.13,"inv":816.63,"rev":0.0},{"date":"2026-02-06","sales":20850.04,"inv":2163.69,"rev":43241.41},{"date":"2026-02-13","sales":0,"inv":11345.06,"rev":0.0},{"date":"2026-02-20","sales":16565.4,"inv":7916.07,"rev":1676.1},{"date":"2026-02-27","sales":164437.3,"inv":5226.9,"rev":0.0},{"date":"2026-03-06","sales":53109.09,"inv":126127.8,"rev":0.0},{"date":"2026-03-13","sales":26310.74,"inv":67462.9,"rev":56838.24},{"date":"2026-03-27","sales":19379.67,"inv":114083.8,"rev":68474.25},{"date":"2026-04-03","sales":781.59,"inv":4379.41,"rev":1076.91},{"date":"2026-04-10","sales":0,"inv":1056.66,"rev":40464.23},{"date":"2026-04-17","sales":0,"inv":-54759.44,"rev":1322.88}]},{"name":"General & Medical - Direct ","weeks":[{"date":"2026-01-09","sales":3967.29,"inv":586.25,"rev":844.35},{"date":"2026-01-16","sales":2770.97,"inv":1935.42,"rev":2110.13},{"date":"2026-01-23","sales":2120.92,"inv":1343.6,"rev":41031.37},{"date":"2026-01-30","sales":5955.86,"inv":837.35,"rev":7369.06},{"date":"2026-02-06","sales":2656.37,"inv":4159.91,"rev":3028.9},{"date":"2026-02-13","sales":534.88,"inv":2828.62,"rev":145.89},{"date":"2026-02-20","sales":56243.77,"inv":3582.1,"rev":9503.04},{"date":"2026-02-27","sales":820.22,"inv":924.81,"rev":1322.82},{"date":"2026-03-06","sales":254.63,"inv":10527.01,"rev":7268.02},{"date":"2026-03-13","sales":7993.95,"inv":1211.29,"rev":1360.31},{"date":"2026-03-27","sales":7474.64,"inv":513.44,"rev":3416.88},{"date":"2026-04-03","sales":3293.7,"inv":9501.48,"rev":1111.14},{"date":"2026-04-10","sales":0,"inv":5320.83,"rev":62850.23},{"date":"2026-04-17","sales":858.19,"inv":470.7,"rev":1016.15}]},{"name":"Stephen EB Team","weeks":[{"date":"2026-01-09","sales":30451.47,"inv":-2142.27,"rev":7072.17},{"date":"2026-01-16","sales":0,"inv":722.78,"rev":8940.56},{"date":"2026-01-23","sales":0,"inv":181.87,"rev":0.0},{"date":"2026-01-30","sales":3523.98,"inv":-378.44,"rev":342.5},{"date":"2026-02-06","sales":0,"inv":68744.42,"rev":121869.31},{"date":"2026-02-13","sales":19328.84,"inv":1528.26,"rev":30128.35},{"date":"2026-02-20","sales":0,"inv":-131.52,"rev":2374.71},{"date":"2026-02-27","sales":0,"inv":7833.08,"rev":8851.1},{"date":"2026-03-06","sales":625.37,"inv":-110.43,"rev":-122.51},{"date":"2026-03-13","sales":47873.89,"inv":5811.6,"rev":16099.94},{"date":"2026-03-27","sales":35998.25,"inv":106382.27,"rev":7228.36},{"date":"2026-04-03","sales":0,"inv":43569.02,"rev":0.0},{"date":"2026-04-10","sales":0,"inv":136.0,"rev":31839.98},{"date":"2026-04-17","sales":43554.62,"inv":671.03,"rev":504.24}]},{"name":"Sonny Ridgewell","weeks":[{"date":"2026-01-09","sales":15497.96,"inv":59316.36,"rev":0.0},{"date":"2026-01-16","sales":3225.44,"inv":21213.12,"rev":6426.0},{"date":"2026-01-23","sales":74326.92,"inv":3398.21,"rev":23879.74},{"date":"2026-01-30","sales":75556.99,"inv":17792.33,"rev":16422.93},{"date":"2026-02-06","sales":25164.81,"inv":170.35,"rev":35369.35},{"date":"2026-02-13","sales":1088.67,"inv":3730.1,"rev":1708.66},{"date":"2026-02-20","sales":25399.48,"inv":1553.39,"rev":0.0},{"date":"2026-02-27","sales":5672.54,"inv":25203.44,"rev":5472.43},{"date":"2026-03-06","sales":23874.13,"inv":73862.03,"rev":0.0},{"date":"2026-03-13","sales":416.28,"inv":30714.89,"rev":1823.3},{"date":"2026-03-27","sales":42102.66,"inv":63442.76,"rev":43765.98},{"date":"2026-04-03","sales":55667.1,"inv":7135.02,"rev":6570.36},{"date":"2026-04-10","sales":16219.99,"inv":30819.96,"rev":33252.44},{"date":"2026-04-17","sales":13874.78,"inv":30196.16,"rev":35191.38}]},{"name":"Brett Staveley","weeks":[{"date":"2026-02-06","sales":206.91,"inv":0.0,"rev":0.0},{"date":"2026-02-13","sales":0,"inv":35.41,"rev":0.0},{"date":"2026-02-20","sales":0,"inv":0.0,"rev":35.38},{"date":"2026-02-27","sales":67116.91,"inv":6724.58,"rev":0.0},{"date":"2026-03-06","sales":501.14,"inv":2020.42,"rev":0.0},{"date":"2026-03-13","sales":0,"inv":0.0,"rev":100.35},{"date":"2026-03-27","sales":461.48,"inv":5846.56,"rev":6720.0},{"date":"2026-04-03","sales":0,"inv":461.47,"rev":0.0},{"date":"2026-04-10","sales":5455.2,"inv":0.0,"rev":5842.58},{"date":"2026-04-17","sales":0,"inv":1566.2,"rev":1912.84}]},{"name":"Sooraj Thaha","weeks":[{"date":"2026-01-23","sales":89.92,"inv":808.22,"rev":0.0},{"date":"2026-01-30","sales":0,"inv":8058.67,"rev":0.0},{"date":"2026-02-06","sales":0,"inv":705.24,"rev":171.55},{"date":"2026-02-13","sales":0,"inv":571.04,"rev":278.52},{"date":"2026-02-20","sales":0,"inv":535.13,"rev":2703.17},{"date":"2026-02-27","sales":0,"inv":1247.46,"rev":0.0},{"date":"2026-03-06","sales":955.72,"inv":29568.63,"rev":850.65},{"date":"2026-03-13","sales":0,"inv":7363.06,"rev":77.99},{"date":"2026-03-27","sales":4786.58,"inv":592.78,"rev":3525.61},{"date":"2026-04-03","sales":189.37,"inv":7017.61,"rev":1466.6},{"date":"2026-04-10","sales":0,"inv":8843.02,"rev":9102.77},{"date":"2026-04-17","sales":0,"inv":0.0,"rev":19109.02}]},{"name":"Khaled Salem","weeks":[{"date":"2026-02-27","sales":10983.67,"inv":0.0,"rev":0.0}]},{"name":"Oliver Bowen","weeks":[{"date":"2026-02-27","sales":2447.93,"inv":0.0,"rev":0.0},{"date":"2026-03-06","sales":1602.18,"inv":2449.6,"rev":0.0},{"date":"2026-03-13","sales":23857.42,"inv":0.0,"rev":204.0},{"date":"2026-03-27","sales":0,"inv":24200.75,"rev":0.0},{"date":"2026-04-03","sales":3668.11,"inv":0.0,"rev":0.0},{"date":"2026-04-10","sales":0,"inv":0.0,"rev":24045.2},{"date":"2026-04-17","sales":0,"inv":2272.04,"rev":0.0}]},{"name":"Max Nutter","weeks":[{"date":"2026-04-10","sales":0,"inv":520.43,"rev":0.0},{"date":"2026-04-17","sales":0,"inv":0.0,"rev":520.07}]},{"name":"Miro","weeks":[{"date":"2026-01-09","sales":0,"inv":42.01,"rev":11124.72},{"date":"2026-01-16","sales":0,"inv":-263.85,"rev":18636.72},{"date":"2026-01-23","sales":0,"inv":-39.65,"rev":29430.29},{"date":"2026-01-30","sales":32134.0,"inv":10946.48,"rev":837.44},{"date":"2026-02-06","sales":90299.41,"inv":71887.7,"rev":41679.7},{"date":"2026-02-13","sales":0,"inv":27396.38,"rev":0.0},{"date":"2026-02-20","sales":0,"inv":561.78,"rev":5002.56},{"date":"2026-02-27","sales":177722.85,"inv":14233.02,"rev":267.26},{"date":"2026-03-06","sales":0,"inv":1535.21,"rev":7874.39},{"date":"2026-03-13","sales":110787.56,"inv":5069.42,"rev":15169.4},{"date":"2026-03-27","sales":0,"inv":49554.64,"rev":29990.62},{"date":"2026-04-03","sales":0,"inv":85795.03,"rev":140.02},{"date":"2026-04-10","sales":0,"inv":0.0,"rev":28953.33},{"date":"2026-04-17","sales":12158.08,"inv":191083.64,"rev":30124.08}]},{"name":"Kelly","weeks":[{"date":"2026-01-09","sales":568.54,"inv":-56.66,"rev":797.34},{"date":"2026-01-16","sales":250.33,"inv":275.2,"rev":7799.49},{"date":"2026-01-23","sales":530.44,"inv":2469.71,"rev":5666.41},{"date":"2026-01-30","sales":0,"inv":10755.03,"rev":29817.21},{"date":"2026-02-06","sales":0,"inv":1385.53,"rev":16684.93},{"date":"2026-02-13","sales":1723.03,"inv":1916.61,"rev":0.0},{"date":"2026-02-20","sales":1058.86,"inv":6222.06,"rev":552.26},{"date":"2026-02-27","sales":0,"inv":15.48,"rev":6428.24},{"date":"2026-03-06","sales":34087.86,"inv":489.17,"rev":7624.86},{"date":"2026-03-13","sales":0,"inv":-596.27,"rev":534.35},{"date":"2026-03-27","sales":78.96,"inv":1035.95,"rev":1692.2},{"date":"2026-04-03","sales":0,"inv":35090.67,"rev":1510.78},{"date":"2026-04-10","sales":39637.62,"inv":13188.8,"rev":36887.84},{"date":"2026-04-17","sales":17596.12,"inv":49699.71,"rev":0.0}]},{"name":"Ruben","weeks":[{"date":"2026-01-09","sales":18234.49,"inv":68.03,"rev":598.21},{"date":"2026-01-16","sales":5585.06,"inv":0.0,"rev":1054.15},{"date":"2026-01-23","sales":0,"inv":5896.15,"rev":3071.63},{"date":"2026-01-30","sales":0,"inv":645.39,"rev":58.01},{"date":"2026-02-06","sales":9.35,"inv":647.81,"rev":5764.97},{"date":"2026-02-13","sales":2776.76,"inv":3276.99,"rev":557.81},{"date":"2026-02-20","sales":0,"inv":1054.91,"rev":14616.75},{"date":"2026-02-27","sales":0,"inv":0.0,"rev":1997.1},{"date":"2026-03-06","sales":291.87,"inv":677.95,"rev":0.0},{"date":"2026-03-13","sales":1683.86,"inv":639.32,"rev":965.18},{"date":"2026-03-27","sales":0,"inv":1213.31,"rev":3826.97},{"date":"2026-04-03","sales":0,"inv":-1929.31,"rev":-59.93},{"date":"2026-04-10","sales":0,"inv":0.0,"rev":323.01},{"date":"2026-04-17","sales":0,"inv":606.84,"rev":28.41}]},{"name":"Others","weeks":[{"date":"2026-01-09","sales":0,"inv":58.69,"rev":0.0},{"date":"2026-02-06","sales":0,"inv":0.0,"rev":40.45},{"date":"2026-02-20","sales":0,"inv":0.0,"rev":15.64},{"date":"2026-03-27","sales":0,"inv":0.0,"rev":292.6}]},{"name":"Waqqaz ","weeks":[{"date":"2026-01-09","sales":0,"inv":27.54,"rev":414.87},{"date":"2026-01-16","sales":0,"inv":142.2,"rev":0.0},{"date":"2026-01-23","sales":0,"inv":-675.11,"rev":2416.74},{"date":"2026-01-30","sales":0,"inv":119.62,"rev":0.0},{"date":"2026-02-06","sales":0,"inv":-821.08,"rev":210.34},{"date":"2026-02-13","sales":0,"inv":206.18,"rev":147.63},{"date":"2026-02-20","sales":0,"inv":610.11,"rev":532.65},{"date":"2026-02-27","sales":0,"inv":0.0,"rev":1069.91},{"date":"2026-03-06","sales":0,"inv":358.14,"rev":0.0},{"date":"2026-03-13","sales":0,"inv":393.08,"rev":0.0},{"date":"2026-03-27","sales":0,"inv":80.5,"rev":0.0},{"date":"2026-04-03","sales":0,"inv":5.52,"rev":0.0},{"date":"2026-04-10","sales":0,"inv":0.0,"rev":2452.16}]},{"name":"Aletha Mudyahoto","weeks":[{"date":"2026-01-30","sales":24.33,"inv":0.0,"rev":0.0},{"date":"2026-02-06","sales":333.24,"inv":333.25,"rev":0.0},{"date":"2026-02-13","sales":377.14,"inv":377.14,"rev":0.0},{"date":"2026-02-20","sales":1741.43,"inv":0.0,"rev":333.02},{"date":"2026-03-13","sales":96.07,"inv":0.0,"rev":0.0},{"date":"2026-03-27","sales":939.35,"inv":246.82,"rev":115.97},{"date":"2026-04-03","sales":0,"inv":708.07,"rev":15.53},{"date":"2026-04-17","sales":286.85,"inv":0.0,"rev":246.65}]},{"name":"Leila Kedenge","weeks":[{"date":"2026-02-27","sales":97.63,"inv":0.0,"rev":0.0},{"date":"2026-03-06","sales":60.8,"inv":0.0,"rev":0.0},{"date":"2026-03-13","sales":396.19,"inv":0.0,"rev":0.0},{"date":"2026-03-27","sales":131.19,"inv":526.06,"rev":72.91},{"date":"2026-04-03","sales":0,"inv":0.0,"rev":452.8}]},{"name":"Retention","weeks":[{"date":"2026-01-09","sales":4206.97,"inv":360.59,"rev":19075.04},{"date":"2026-01-16","sales":3149.2,"inv":2671.37,"rev":2050.5},{"date":"2026-01-23","sales":2454.48,"inv":1468.16,"rev":1724.29},{"date":"2026-01-30","sales":8295.56,"inv":4030.28,"rev":1084.92},{"date":"2026-02-06","sales":7709.61,"inv":5022.56,"rev":6837.88},{"date":"2026-02-13","sales":18346.82,"inv":7436.36,"rev":799.81},{"date":"2026-02-20","sales":3389.36,"inv":2185.04,"rev":8104.81},{"date":"2026-02-27","sales":1624.53,"inv":3576.13,"rev":4820.92},{"date":"2026-03-06","sales":0,"inv":2911.84,"rev":431.61},{"date":"2026-03-13","sales":1276.68,"inv":-526.63,"rev":1765.29},{"date":"2026-03-27","sales":12412.82,"inv":6100.69,"rev":8248.45},{"date":"2026-04-03","sales":822.07,"inv":1302.69,"rev":164.58},{"date":"2026-04-10","sales":9938.29,"inv":2434.11,"rev":3603.63},{"date":"2026-04-17","sales":7348.73,"inv":8564.2,"rev":1636.12}]}],"ia":[{"name":"Frank Hutchinson","team":"Alpha","weeks":[{"date":"2026-01-09","inv":0,"trails":1403.63,"sales":0},{"date":"2026-01-16","inv":0,"trails":5391.88,"sales":0},{"date":"2026-01-30","inv":0,"trails":1748.16,"sales":0},{"date":"2026-02-06","inv":0,"trails":1498.27,"sales":0},{"date":"2026-02-13","inv":0,"trails":5873.88,"sales":0},{"date":"2026-02-20","inv":0,"trails":15.28,"sales":0},{"date":"2026-03-06","inv":0,"trails":1151.09,"sales":0},{"date":"2026-03-13","inv":0,"trails":149.1,"sales":1000.0},{"date":"2026-04-03","inv":0,"trails":1251.49,"sales":0},{"date":"2026-04-10","inv":1000.0,"trails":293.51,"sales":500.0},{"date":"2026-04-17","inv":0,"trails":5149.12,"sales":0}]},{"name":"Barry Goertz","team":"Alpha","weeks":[{"date":"2026-01-09","inv":124.0,"trails":2042.68,"sales":0},{"date":"2026-01-16","inv":0,"trails":8308.87,"sales":0},{"date":"2026-01-23","inv":0,"trails":533.98,"sales":0},{"date":"2026-01-30","inv":1449.45,"trails":189.21,"sales":0},{"date":"2026-02-06","inv":0,"trails":2005.02,"sales":0},{"date":"2026-02-13","inv":0,"trails":1821.7,"sales":0},{"date":"2026-02-20","inv":0,"trails":163.5,"sales":0},{"date":"2026-03-06","inv":218.74,"trails":1589.4,"sales":0},{"date":"2026-03-13","inv":0,"trails":343.71,"sales":0},{"date":"2026-03-27","inv":-218.74,"trails":215.87,"sales":0},{"date":"2026-04-03","inv":184.66,"trails":2240.41,"sales":0},{"date":"2026-04-10","inv":0,"trails":373.9,"sales":0},{"date":"2026-04-17","inv":-11.73,"trails":4950.18,"sales":0}]},{"name":"Julian Stanley","team":"Alpha","weeks":[{"date":"2026-01-09","inv":11.0,"trails":203.25,"sales":650.0},{"date":"2026-01-16","inv":0,"trails":617.48,"sales":0},{"date":"2026-01-23","inv":0,"trails":5.82,"sales":0},{"date":"2026-01-30","inv":0,"trails":682.31,"sales":0},{"date":"2026-02-06","inv":0,"trails":603.83,"sales":0},{"date":"2026-02-13","inv":0,"trails":163.52,"sales":50.0},{"date":"2026-02-20","inv":0,"trails":620.8,"sales":3000.0},{"date":"2026-02-27","inv":130.0,"trails":0,"sales":3888.12},{"date":"2026-03-06","inv":0,"trails":149.39,"sales":700.0},{"date":"2026-03-13","inv":35.0,"trails":119.75,"sales":1687.5},{"date":"2026-03-27","inv":450.0,"trails":175.68,"sales":1560.0},{"date":"2026-04-03","inv":1077.35,"trails":233.11,"sales":0},{"date":"2026-04-10","inv":0,"trails":110.13,"sales":0},{"date":"2026-04-17","inv":0,"trails":994.98,"sales":200.0}]},{"name":"Paul McCullagh","team":"Alpha","weeks":[{"date":"2026-01-09","inv":0,"trails":177.94,"sales":0},{"date":"2026-01-16","inv":0,"trails":209.61,"sales":0},{"date":"2026-01-23","inv":0,"trails":5.64,"sales":0},{"date":"2026-02-06","inv":0,"trails":34.22,"sales":0},{"date":"2026-02-13","inv":0,"trails":374.72,"sales":0},{"date":"2026-03-06","inv":0,"trails":639.24,"sales":0},{"date":"2026-03-13","inv":0,"trails":13.3,"sales":0},{"date":"2026-03-27","inv":0,"trails":32.8,"sales":0},{"date":"2026-04-03","inv":0,"trails":79.12,"sales":0},{"date":"2026-04-10","inv":0,"trails":116.37,"sales":0},{"date":"2026-04-17","inv":0,"trails":875.51,"sales":0}]},{"name":"James Prince","team":"Prinden","weeks":[{"date":"2026-01-09","inv":2771.82,"trails":6274.55,"sales":0},{"date":"2026-01-16","inv":0,"trails":6568.45,"sales":0},{"date":"2026-01-23","inv":0,"trails":3781.08,"sales":0},{"date":"2026-01-30","inv":0,"trails":1139.87,"sales":1400.0},{"date":"2026-02-06","inv":0,"trails":5862.59,"sales":0},{"date":"2026-02-13","inv":0,"trails":759.11,"sales":0},{"date":"2026-02-20","inv":0,"trails":92.37,"sales":0},{"date":"2026-03-06","inv":0,"trails":4907.78,"sales":0},{"date":"2026-03-13","inv":0,"trails":3421.35,"sales":0},{"date":"2026-04-03","inv":0,"trails":5613.67,"sales":0},{"date":"2026-04-10","inv":0,"trails":1647.74,"sales":0},{"date":"2026-04-17","inv":0,"trails":6873.98,"sales":0}]},{"name":"Jonathan Getliffe","team":"Prinden","weeks":[{"date":"2026-01-09","inv":0,"trails":1415.22,"sales":0},{"date":"2026-01-16","inv":8923.2,"trails":311.01,"sales":0},{"date":"2026-01-23","inv":0,"trails":457.64,"sales":0},{"date":"2026-01-30","inv":0,"trails":6.0,"sales":0},{"date":"2026-02-06","inv":0,"trails":1302.26,"sales":0},{"date":"2026-02-13","inv":0,"trails":74.7,"sales":0},{"date":"2026-02-20","inv":0,"trails":-73.88,"sales":0},{"date":"2026-03-06","inv":0,"trails":1318.39,"sales":0},{"date":"2026-03-13","inv":0,"trails":115.19,"sales":0},{"date":"2026-04-03","inv":0,"trails":1431.37,"sales":0},{"date":"2026-04-10","inv":0,"trails":683.87,"sales":0},{"date":"2026-04-17","inv":0,"trails":477.4,"sales":0}]},{"name":"Sam Jenkins","team":"Prinden","weeks":[{"date":"2026-01-09","inv":0,"trails":532.53,"sales":0},{"date":"2026-02-06","inv":0,"trails":723.72,"sales":0},{"date":"2026-03-06","inv":0,"trails":504.01,"sales":0},{"date":"2026-03-13","inv":0,"trails":20.0,"sales":0},{"date":"2026-04-03","inv":0,"trails":537.47,"sales":0},{"date":"2026-04-10","inv":0,"trails":12.5,"sales":0}]},{"name":"Ben Buckley","team":"PB Team","weeks":[{"date":"2026-01-09","inv":0,"trails":188.22,"sales":0},{"date":"2026-01-16","inv":0,"trails":27.24,"sales":0},{"date":"2026-01-23","inv":0,"trails":265.31,"sales":0},{"date":"2026-01-30","inv":0,"trails":110.28,"sales":0},{"date":"2026-02-06","inv":0,"trails":42.32,"sales":4578.43},{"date":"2026-02-13","inv":0,"trails":308.82,"sales":0},{"date":"2026-02-20","inv":0,"trails":24.48,"sales":0},{"date":"2026-02-27","inv":0,"trails":9.45,"sales":0},{"date":"2026-03-06","inv":0,"trails":91.32,"sales":0},{"date":"2026-03-13","inv":0,"trails":469.47,"sales":0},{"date":"2026-03-27","inv":0,"trails":19.4,"sales":0},{"date":"2026-04-03","inv":0,"trails":86.7,"sales":6598.1},{"date":"2026-04-10","inv":0,"trails":478.73,"sales":0},{"date":"2026-04-17","inv":0,"trails":158.51,"sales":0}]},{"name":"Paul Baker","team":"PB Team","weeks":[{"date":"2026-01-09","inv":0,"trails":307.06,"sales":5796.48},{"date":"2026-01-16","inv":0,"trails":402.7,"sales":5355.64},{"date":"2026-01-23","inv":0,"trails":324.28,"sales":0},{"date":"2026-01-30","inv":1811.34,"trails":132.36,"sales":0},{"date":"2026-02-06","inv":0,"trails":537.93,"sales":0},{"date":"2026-02-13","inv":0,"trails":600.74,"sales":0},{"date":"2026-02-20","inv":0,"trails":108.36,"sales":24488.42},{"date":"2026-02-27","inv":1918.45,"trails":6.48,"sales":2479.87},{"date":"2026-03-06","inv":0,"trails":177.64,"sales":9236.31},{"date":"2026-03-13","inv":598.62,"trails":2497.95,"sales":0},{"date":"2026-03-27","inv":0,"trails":15.92,"sales":0},{"date":"2026-04-03","inv":380.8,"trails":161.53,"sales":4381.24},{"date":"2026-04-10","inv":4096.92,"trails":1522.55,"sales":0},{"date":"2026-04-17","inv":1564.4,"trails":629.61,"sales":3040.12}]},{"name":"Stefan Terry","team":"SVN Capital","weeks":[{"date":"2026-01-09","inv":0,"trails":3234.68,"sales":0},{"date":"2026-01-16","inv":0,"trails":1360.04,"sales":0},{"date":"2026-01-23","inv":0,"trails":410.56,"sales":2551.35},{"date":"2026-01-30","inv":0,"trails":264.49,"sales":0},{"date":"2026-02-06","inv":2462.76,"trails":4514.98,"sales":0},{"date":"2026-02-13","inv":0,"trails":1170.76,"sales":0},{"date":"2026-02-20","inv":3717.34,"trails":323.47,"sales":2153.25},{"date":"2026-02-27","inv":0,"trails":82.08,"sales":0},{"date":"2026-03-06","inv":0,"trails":2989.45,"sales":0},{"date":"2026-03-13","inv":0,"trails":724.81,"sales":0},{"date":"2026-03-27","inv":0,"trails":156.85,"sales":0},{"date":"2026-04-03","inv":0,"trails":3432.39,"sales":0},{"date":"2026-04-10","inv":0,"trails":425.91,"sales":0},{"date":"2026-04-17","inv":0,"trails":1048.64,"sales":0}]},{"name":"Aman Moti","team":"SVN Capital","weeks":[{"date":"2026-01-09","inv":0,"trails":777.42,"sales":0},{"date":"2026-01-16","inv":0,"trails":7.5,"sales":0},{"date":"2026-01-23","inv":0,"trails":27.02,"sales":0},{"date":"2026-01-30","inv":0,"trails":32.25,"sales":0},{"date":"2026-02-06","inv":0,"trails":1222.5,"sales":0},{"date":"2026-02-13","inv":0,"trails":342.3,"sales":0},{"date":"2026-02-20","inv":0,"trails":84.58,"sales":0},{"date":"2026-03-06","inv":0,"trails":602.1,"sales":0},{"date":"2026-03-13","inv":0,"trails":443.22,"sales":0},{"date":"2026-03-27","inv":0,"trails":20.56,"sales":0},{"date":"2026-04-03","inv":0,"trails":835.8,"sales":0},{"date":"2026-04-10","inv":0,"trails":129.28,"sales":0},{"date":"2026-04-17","inv":0,"trails":139.38,"sales":0}]},{"name":"Andrew Mackenzie","team":"SVN Capital","weeks":[{"date":"2026-01-09","inv":0,"trails":299.21,"sales":0},{"date":"2026-01-23","inv":0,"trails":106.16,"sales":0},{"date":"2026-02-06","inv":0,"trails":340.2,"sales":0},{"date":"2026-03-06","inv":0,"trails":274.07,"sales":0},{"date":"2026-03-13","inv":0,"trails":37.52,"sales":0},{"date":"2026-04-03","inv":0,"trails":332.04,"sales":0}]},{"name":"Antoni Jackson","team":"SVN Capital","weeks":[{"date":"2026-01-09","inv":0,"trails":179.06,"sales":0},{"date":"2026-01-23","inv":0,"trails":7.01,"sales":0},{"date":"2026-02-06","inv":0,"trails":25.01,"sales":0},{"date":"2026-02-13","inv":0,"trails":13.8,"sales":0},{"date":"2026-03-06","inv":0,"trails":7.01,"sales":0},{"date":"2026-03-13","inv":0,"trails":145.36,"sales":0},{"date":"2026-03-27","inv":0,"trails":67.2,"sales":0},{"date":"2026-04-03","inv":0,"trails":25.01,"sales":0},{"date":"2026-04-10","inv":0,"trails":77.82,"sales":0}]},{"name":"Bob Bhowmik","team":"SVN Capital","weeks":[{"date":"2026-01-09","inv":0,"trails":1017.96,"sales":0},{"date":"2026-01-23","inv":3717.35,"trails":192.43,"sales":0},{"date":"2026-01-30","inv":0,"trails":45.68,"sales":0},{"date":"2026-02-06","inv":0,"trails":694.27,"sales":0},{"date":"2026-02-13","inv":0,"trails":746.93,"sales":0},{"date":"2026-02-20","inv":0,"trails":31.62,"sales":2549.56},{"date":"2026-02-27","inv":0,"trails":628.65,"sales":0},{"date":"2026-03-06","inv":0,"trails":624.88,"sales":0},{"date":"2026-03-13","inv":0,"trails":243.81,"sales":0},{"date":"2026-03-27","inv":0,"trails":86.77,"sales":0},{"date":"2026-04-03","inv":0,"trails":682.04,"sales":0},{"date":"2026-04-10","inv":0,"trails":255.41,"sales":0},{"date":"2026-04-17","inv":0,"trails":7.79,"sales":0}]},{"name":"Brian Wolf   ","team":"SVN Capital","weeks":[{"date":"2026-01-09","inv":0,"trails":1249.95,"sales":0},{"date":"2026-01-16","inv":0,"trails":19.26,"sales":0},{"date":"2026-01-23","inv":0,"trails":310.65,"sales":0},{"date":"2026-01-30","inv":0,"trails":132.31,"sales":0},{"date":"2026-02-06","inv":0,"trails":1168.3,"sales":0},{"date":"2026-02-13","inv":0,"trails":185.4,"sales":0},{"date":"2026-02-20","inv":0,"trails":29.78,"sales":0},{"date":"2026-02-27","inv":0,"trails":90.21,"sales":0},{"date":"2026-03-06","inv":0,"trails":915.1,"sales":0},{"date":"2026-03-13","inv":0,"trails":723.84,"sales":0},{"date":"2026-03-27","inv":0,"trails":34.69,"sales":0},{"date":"2026-04-03","inv":0,"trails":1098.2,"sales":0},{"date":"2026-04-10","inv":0,"trails":132.39,"sales":0},{"date":"2026-04-17","inv":0,"trails":161.56,"sales":0}]},{"name":"Cliffton Matambo","team":"SVN Capital","weeks":[{"date":"2026-01-23","inv":0,"trails":0.19,"sales":0}]},{"name":"Craig O'Sullivan","team":"SVN Capital","weeks":[{"date":"2026-01-16","inv":0,"trails":39.17,"sales":0},{"date":"2026-01-23","inv":0,"trails":98.7,"sales":0},{"date":"2026-01-30","inv":0,"trails":26.83,"sales":0},{"date":"2026-02-06","inv":0,"trails":345.35,"sales":0},{"date":"2026-02-13","inv":0,"trails":176.65,"sales":0},{"date":"2026-02-20","inv":0,"trails":94.0,"sales":0},{"date":"2026-03-13","inv":0,"trails":379.39,"sales":0},{"date":"2026-03-27","inv":0,"trails":43.24,"sales":0},{"date":"2026-04-03","inv":0,"trails":2.57,"sales":0},{"date":"2026-04-10","inv":0,"trails":133.08,"sales":0},{"date":"2026-04-17","inv":0,"trails":372.38,"sales":0}]},{"name":"James Marks","team":"SVN Capital","weeks":[{"date":"2026-01-09","inv":0,"trails":87.74,"sales":0},{"date":"2026-01-16","inv":0,"trails":2018.14,"sales":0},{"date":"2026-01-23","inv":0,"trails":446.68,"sales":0},{"date":"2026-01-30","inv":0,"trails":216.65,"sales":0},{"date":"2026-02-06","inv":0,"trails":196.48,"sales":0},{"date":"2026-02-13","inv":0,"trails":115.96,"sales":0},{"date":"2026-03-13","inv":1400.0,"trails":312.62,"sales":0},{"date":"2026-03-27","inv":0,"trails":0,"sales":1750.0},{"date":"2026-04-10","inv":0,"trails":114.43,"sales":0},{"date":"2026-04-17","inv":1750.0,"trails":2055.82,"sales":0}]},{"name":"James McGill","team":"SVN Capital","weeks":[{"date":"2026-01-09","inv":0,"trails":661.88,"sales":0},{"date":"2026-01-16","inv":0,"trails":5897.28,"sales":0},{"date":"2026-01-23","inv":0,"trails":2.04,"sales":0},{"date":"2026-02-06","inv":0,"trails":741.65,"sales":0},{"date":"2026-02-13","inv":0,"trails":11.4,"sales":0},{"date":"2026-02-20","inv":0,"trails":101.09,"sales":0},{"date":"2026-03-06","inv":0,"trails":558.22,"sales":0},{"date":"2026-03-13","inv":0,"trails":1766.7,"sales":0},{"date":"2026-04-03","inv":0,"trails":704.09,"sales":0},{"date":"2026-04-10","inv":0,"trails":485.75,"sales":0},{"date":"2026-04-17","inv":0,"trails":5758.69,"sales":0}]},{"name":"Lydia Andrews","team":"SVN Capital","weeks":[{"date":"2026-01-09","inv":0,"trails":24.78,"sales":0},{"date":"2026-01-16","inv":0,"trails":953.23,"sales":0},{"date":"2026-01-23","inv":0,"trails":353.15,"sales":2625.12},{"date":"2026-01-30","inv":3163.62,"trails":107.79,"sales":0},{"date":"2026-02-06","inv":0,"trails":82.59,"sales":0},{"date":"2026-02-13","inv":0,"trails":83.07,"sales":0},{"date":"2026-02-20","inv":0,"trails":7.5,"sales":0},{"date":"2026-03-13","inv":-900.4,"trails":86.35,"sales":0},{"date":"2026-03-27","inv":0,"trails":7.44,"sales":0},{"date":"2026-04-03","inv":0,"trails":13.94,"sales":2357.17},{"date":"2026-04-10","inv":0,"trails":74.13,"sales":0},{"date":"2026-04-17","inv":1086.46,"trails":975.89,"sales":0}]},{"name":"Mohamad Mrad","team":"SVN Capital","weeks":[{"date":"2026-01-09","inv":0,"trails":45.51,"sales":0},{"date":"2026-01-16","inv":0,"trails":7.5,"sales":0},{"date":"2026-02-06","inv":0,"trails":33.64,"sales":0},{"date":"2026-02-13","inv":0,"trails":76.33,"sales":0},{"date":"2026-03-06","inv":0,"trails":25.77,"sales":0},{"date":"2026-03-13","inv":0,"trails":106.08,"sales":0},{"date":"2026-04-03","inv":0,"trails":32.63,"sales":0},{"date":"2026-04-17","inv":0,"trails":7.5,"sales":0}]},{"name":"Nial Antonio","team":"SVN Capital","weeks":[{"date":"2026-01-09","inv":0,"trails":256.64,"sales":0},{"date":"2026-01-16","inv":0,"trails":435.06,"sales":0},{"date":"2026-01-30","inv":0,"trails":54.61,"sales":0},{"date":"2026-03-13","inv":0,"trails":121.02,"sales":0},{"date":"2026-04-10","inv":0,"trails":256.72,"sales":0},{"date":"2026-04-17","inv":0,"trails":377.23,"sales":0}]},{"name":"Norman Lowe","team":"SVN Capital","weeks":[{"date":"2026-01-09","inv":0,"trails":29.31,"sales":0},{"date":"2026-02-06","inv":0,"trails":25.85,"sales":0},{"date":"2026-02-13","inv":0,"trails":3.92,"sales":0},{"date":"2026-03-06","inv":0,"trails":23.6,"sales":0},{"date":"2026-03-13","inv":0,"trails":3.92,"sales":0},{"date":"2026-03-27","inv":0,"trails":0,"sales":4818.12},{"date":"2026-04-03","inv":0,"trails":25.41,"sales":0},{"date":"2026-04-10","inv":0,"trails":3.92,"sales":0},{"date":"2026-04-17","inv":1606.02,"trails":0,"sales":0}]},{"name":"Stuart Mizen","team":"SVN Capital","weeks":[{"date":"2026-01-09","inv":0,"trails":417.31,"sales":0},{"date":"2026-01-16","inv":0,"trails":1859.83,"sales":0},{"date":"2026-01-23","inv":0,"trails":147.64,"sales":0},{"date":"2026-01-30","inv":0,"trails":40.32,"sales":0},{"date":"2026-02-06","inv":0,"trails":2274.76,"sales":0},{"date":"2026-02-13","inv":0,"trails":35.56,"sales":0},{"date":"2026-02-20","inv":0,"trails":224.08,"sales":0},{"date":"2026-03-06","inv":0,"trails":163.58,"sales":0},{"date":"2026-03-13","inv":0,"trails":233.34,"sales":0},{"date":"2026-03-27","inv":0,"trails":18.38,"sales":0},{"date":"2026-04-03","inv":0,"trails":179.58,"sales":0},{"date":"2026-04-10","inv":0,"trails":387.78,"sales":0},{"date":"2026-04-17","inv":0,"trails":1928.46,"sales":0}]},{"name":"Yasmine Abou Elnasr","team":"SVN Capital","weeks":[{"date":"2026-01-09","inv":0,"trails":1659.2,"sales":7413.12},{"date":"2026-01-16","inv":0,"trails":112.53,"sales":0},{"date":"2026-01-23","inv":0,"trails":200.71,"sales":0},{"date":"2026-01-30","inv":0,"trails":80.78,"sales":0},{"date":"2026-02-06","inv":0,"trails":87.93,"sales":0},{"date":"2026-02-13","inv":0,"trails":1032.21,"sales":0},{"date":"2026-02-20","inv":0,"trails":42.36,"sales":0},{"date":"2026-02-27","inv":0,"trails":140.67,"sales":0},{"date":"2026-03-06","inv":0,"trails":36.0,"sales":0},{"date":"2026-03-13","inv":0,"trails":2770.41,"sales":0},{"date":"2026-03-27","inv":0,"trails":183.03,"sales":0},{"date":"2026-04-03","inv":0,"trails":61.35,"sales":0},{"date":"2026-04-10","inv":0,"trails":1678.47,"sales":0},{"date":"2026-04-17","inv":0,"trails":366.02,"sales":0}]},{"name":"Joe Barnaby","team":"Joe Barnaby","weeks":[{"date":"2026-01-09","inv":0,"trails":926.32,"sales":0},{"date":"2026-01-16","inv":0,"trails":15355.77,"sales":0},{"date":"2026-01-23","inv":0,"trails":159.49,"sales":0},{"date":"2026-01-30","inv":0,"trails":5.0,"sales":0},{"date":"2026-02-06","inv":0,"trails":224.68,"sales":0},{"date":"2026-02-13","inv":0,"trails":2239.41,"sales":0},{"date":"2026-02-20","inv":0,"trails":5.0,"sales":0},{"date":"2026-03-06","inv":0,"trails":88.32,"sales":0},{"date":"2026-03-13","inv":0,"trails":2602.15,"sales":0},{"date":"2026-03-27","inv":0,"trails":5.0,"sales":0},{"date":"2026-04-03","inv":0,"trails":650.01,"sales":0},{"date":"2026-04-10","inv":0,"trails":1316.62,"sales":0},{"date":"2026-04-17","inv":0,"trails":16091.85,"sales":0}]},{"name":"Sabina Notargiacomo","team":"Joe Barnaby","weeks":[{"date":"2026-01-09","inv":0,"trails":757.29,"sales":0},{"date":"2026-01-16","inv":0,"trails":256.69,"sales":0},{"date":"2026-01-23","inv":0,"trails":265.62,"sales":0},{"date":"2026-01-30","inv":0,"trails":88.79,"sales":0},{"date":"2026-02-06","inv":0,"trails":226.79,"sales":0},{"date":"2026-02-13","inv":0,"trails":1907.53,"sales":0},{"date":"2026-02-20","inv":0,"trails":43.4,"sales":0},{"date":"2026-03-06","inv":0,"trails":110.74,"sales":0},{"date":"2026-03-13","inv":0,"trails":3928.9,"sales":0},{"date":"2026-03-27","inv":0,"trails":43.4,"sales":0},{"date":"2026-04-03","inv":0,"trails":115.55,"sales":0},{"date":"2026-04-10","inv":0,"trails":736.63,"sales":0},{"date":"2026-04-17","inv":0,"trails":2595.04,"sales":0}]},{"name":"Abacus","team":"Abacus","weeks":[{"date":"2026-01-09","inv":0,"trails":1265.56,"sales":0},{"date":"2026-01-16","inv":0,"trails":1026.92,"sales":0},{"date":"2026-01-23","inv":0,"trails":960.85,"sales":0},{"date":"2026-01-30","inv":0,"trails":2767.76,"sales":28896.559999999998},{"date":"2026-02-06","inv":0,"trails":762.89,"sales":3787.1499999999996},{"date":"2026-02-13","inv":1847.22,"trails":703.57,"sales":0},{"date":"2026-02-20","inv":8337.54,"trails":203.06,"sales":1310.33},{"date":"2026-02-27","inv":0,"trails":187.27,"sales":0},{"date":"2026-03-06","inv":0,"trails":548.67,"sales":0},{"date":"2026-03-13","inv":0,"trails":5692.3,"sales":0},{"date":"2026-03-27","inv":0,"trails":381.74,"sales":0},{"date":"2026-04-03","inv":7619.94,"trails":897.19,"sales":0},{"date":"2026-04-10","inv":0,"trails":1735.94,"sales":0},{"date":"2026-04-17","inv":0,"trails":1616.91,"sales":0}]},{"name":"Brett Staveley - Abacus","team":"Abacus","weeks":[{"date":"2026-03-13","inv":1868.28,"trails":0,"sales":0},{"date":"2026-04-17","inv":0,"trails":6.4,"sales":0}]},{"name":"AHR","team":"Individual","weeks":[{"date":"2026-01-09","inv":0,"trails":19417.73,"sales":42684.16},{"date":"2026-01-16","inv":107.42,"trails":51297.98,"sales":0},{"date":"2026-01-23","inv":12230.48,"trails":2064.32,"sales":3840.8900000000003},{"date":"2026-01-30","inv":599.28,"trails":4770.01,"sales":38000.0},{"date":"2026-02-06","inv":389.94,"trails":19010.13,"sales":0},{"date":"2026-02-13","inv":1352.75,"trails":6694.29,"sales":0},{"date":"2026-02-20","inv":-66.42,"trails":648.9,"sales":2610.0},{"date":"2026-02-27","inv":5278.48,"trails":333.48,"sales":2631.42},{"date":"2026-03-06","inv":4329.09,"trails":13711.85,"sales":1700.76},{"date":"2026-03-13","inv":2499.08,"trails":17572.0,"sales":0},{"date":"2026-03-27","inv":0,"trails":458.92,"sales":7703.77},{"date":"2026-04-03","inv":0,"trails":15850.91,"sales":29027.52},{"date":"2026-04-10","inv":3785.33,"trails":8119.57,"sales":16852.54},{"date":"2026-04-17","inv":2820.16,"trails":59298.63,"sales":12310.0}]},{"name":"ARIA","team":"Individual","weeks":[{"date":"2026-01-09","inv":0,"trails":290.37,"sales":0},{"date":"2026-01-23","inv":0,"trails":3.99,"sales":0},{"date":"2026-01-30","inv":0,"trails":37.61,"sales":0},{"date":"2026-02-06","inv":0,"trails":12.75,"sales":0},{"date":"2026-02-13","inv":0,"trails":4.12,"sales":0},{"date":"2026-03-06","inv":0,"trails":3.99,"sales":0},{"date":"2026-03-13","inv":0,"trails":23.99,"sales":0},{"date":"2026-04-03","inv":0,"trails":50.36,"sales":0},{"date":"2026-04-10","inv":0,"trails":11.67,"sales":9489.4},{"date":"2026-04-17","inv":0,"trails":37.61,"sales":0}]},{"name":"APW Team","team":"Individual","weeks":[{"date":"2026-01-09","inv":-832.37,"trails":5647.94,"sales":0},{"date":"2026-01-16","inv":-99.17,"trails":4751.72,"sales":0},{"date":"2026-01-23","inv":0,"trails":940.44,"sales":0},{"date":"2026-01-30","inv":0,"trails":1679.92,"sales":0},{"date":"2026-02-06","inv":0,"trails":6271.65,"sales":0},{"date":"2026-02-13","inv":-336.98,"trails":2974.36,"sales":0},{"date":"2026-02-20","inv":279.81,"trails":683.31,"sales":0},{"date":"2026-02-27","inv":0,"trails":493.27,"sales":0},{"date":"2026-03-06","inv":0,"trails":3798.14,"sales":0},{"date":"2026-03-13","inv":-10292.99,"trails":5182.33,"sales":0},{"date":"2026-03-27","inv":57.91,"trails":2152.24,"sales":0},{"date":"2026-04-03","inv":10136.03,"trails":5471.11,"sales":0},{"date":"2026-04-10","inv":0,"trails":3223.59,"sales":0},{"date":"2026-04-17","inv":0,"trails":4348.96,"sales":0}]},{"name":"Roger Campaner","team":"Individual","weeks":[{"date":"2026-01-09","inv":0,"trails":1161.36,"sales":0},{"date":"2026-01-23","inv":0,"trails":63.45,"sales":0},{"date":"2026-01-30","inv":0,"trails":519.04,"sales":0},{"date":"2026-02-06","inv":0,"trails":563.27,"sales":0},{"date":"2026-02-13","inv":1862.84,"trails":619.49,"sales":1620.0},{"date":"2026-02-20","inv":0,"trails":118.63,"sales":4050.0},{"date":"2026-02-27","inv":810.0,"trails":54.84,"sales":0},{"date":"2026-03-06","inv":0,"trails":205.43,"sales":4841.93},{"date":"2026-03-13","inv":1733.13,"trails":828.95,"sales":0},{"date":"2026-03-27","inv":2208.94,"trails":232.4,"sales":0},{"date":"2026-04-03","inv":0,"trails":1247.46,"sales":0},{"date":"2026-04-10","inv":291.87,"trails":561.0,"sales":0},{"date":"2026-04-17","inv":0,"trails":533.26,"sales":2881.96}]},{"name":"Shaileey Team","team":"Individual","weeks":[{"date":"2026-01-09","inv":0,"trails":888.99,"sales":0},{"date":"2026-01-16","inv":0,"trails":337.51,"sales":0},{"date":"2026-01-23","inv":0,"trails":408.43,"sales":0},{"date":"2026-01-30","inv":0,"trails":197.03,"sales":0},{"date":"2026-02-06","inv":0,"trails":188.48,"sales":0},{"date":"2026-02-13","inv":0,"trails":1218.65,"sales":0},{"date":"2026-02-20","inv":0,"trails":254.52,"sales":0},{"date":"2026-02-27","inv":0,"trails":213.27,"sales":0},{"date":"2026-03-06","inv":0,"trails":37.5,"sales":0},{"date":"2026-03-13","inv":0,"trails":2323.67,"sales":0},{"date":"2026-03-27","inv":0,"trails":262.85,"sales":0},{"date":"2026-04-03","inv":0,"trails":243.65,"sales":0},{"date":"2026-04-10","inv":0,"trails":759.17,"sales":0},{"date":"2026-04-17","inv":0,"trails":512.83,"sales":0}]},{"name":"Indigo","team":"Individual","weeks":[{"date":"2026-01-09","inv":-7414.66,"trails":0,"sales":0},{"date":"2026-02-13","inv":0,"trails":17.5,"sales":0},{"date":"2026-02-27","inv":7414.66,"trails":0,"sales":0},{"date":"2026-03-13","inv":0,"trails":25.3,"sales":0},{"date":"2026-04-10","inv":-595.53,"trails":35.0,"sales":0}]},{"name":"Black Tower","team":"Individual","weeks":[{"date":"2026-01-09","inv":0,"trails":747.22,"sales":0},{"date":"2026-01-16","inv":0,"trails":1756.47,"sales":0},{"date":"2026-01-23","inv":0,"trails":3.13,"sales":0},{"date":"2026-01-30","inv":0,"trails":34.48,"sales":0},{"date":"2026-02-06","inv":0,"trails":653.47,"sales":0},{"date":"2026-02-13","inv":0,"trails":463.84,"sales":0},{"date":"2026-02-20","inv":0,"trails":15.16,"sales":0},{"date":"2026-03-06","inv":0,"trails":618.44,"sales":0},{"date":"2026-03-13","inv":0,"trails":326.07,"sales":0},{"date":"2026-04-03","inv":0,"trails":1901.46,"sales":0},{"date":"2026-04-10","inv":0,"trails":262.26,"sales":0},{"date":"2026-04-17","inv":0,"trails":662.7,"sales":0}]},{"name":"Eoin Mullally","team":"Individual","weeks":[{"date":"2026-01-16","inv":0,"trails":257.23,"sales":0},{"date":"2026-04-17","inv":0,"trails":284.72,"sales":0}]},{"name":"Rodel Balidio","team":"Individual","weeks":[{"date":"2026-01-16","inv":2074.26,"trails":0,"sales":0},{"date":"2026-01-23","inv":0,"trails":0,"sales":2143.73},{"date":"2026-01-30","inv":1176.1,"trails":26.81,"sales":0},{"date":"2026-02-06","inv":1167.01,"trails":0,"sales":7144.82},{"date":"2026-02-13","inv":1577.81,"trails":38.62,"sales":0},{"date":"2026-02-20","inv":0,"trails":18.73,"sales":0},{"date":"2026-02-27","inv":860.01,"trails":0,"sales":2630.35},{"date":"2026-03-13","inv":1200.0,"trails":39.54,"sales":0},{"date":"2026-03-27","inv":0,"trails":38.62,"sales":0},{"date":"2026-04-17","inv":-2962.3,"trails":95.27,"sales":0}]},{"name":"Wentworth","team":"Individual","weeks":[{"date":"2026-01-09","inv":0,"trails":1.35,"sales":0},{"date":"2026-01-16","inv":0,"trails":54.8,"sales":0},{"date":"2026-01-23","inv":0,"trails":32.61,"sales":0},{"date":"2026-01-30","inv":0,"trails":196.55,"sales":0},{"date":"2026-02-06","inv":-229.72,"trails":64.37,"sales":0},{"date":"2026-02-13","inv":0,"trails":46.55,"sales":0},{"date":"2026-02-20","inv":0,"trails":14.67,"sales":0},{"date":"2026-03-06","inv":0,"trails":61.86,"sales":0},{"date":"2026-03-13","inv":0,"trails":193.8,"sales":12936.73},{"date":"2026-03-27","inv":0,"trails":86.42,"sales":0},{"date":"2026-04-03","inv":0,"trails":30.49,"sales":0},{"date":"2026-04-10","inv":8919.53,"trails":96.57,"sales":0},{"date":"2026-04-17","inv":0,"trails":96.65,"sales":0}]},{"name":"Akhil Purohit","team":"Akhil","weeks":[{"date":"2026-01-09","inv":0,"trails":1884.84,"sales":0},{"date":"2026-01-16","inv":2799.78,"trails":431.63,"sales":0},{"date":"2026-01-23","inv":0,"trails":145.54,"sales":0},{"date":"2026-01-30","inv":1052.23,"trails":242.57,"sales":0},{"date":"2026-02-06","inv":0,"trails":141.36,"sales":0},{"date":"2026-02-13","inv":0,"trails":862.91,"sales":0},{"date":"2026-02-20","inv":0,"trails":469.09,"sales":0},{"date":"2026-02-27","inv":0,"trails":22.82,"sales":0},{"date":"2026-03-13","inv":0,"trails":1049.91,"sales":0},{"date":"2026-03-27","inv":0,"trails":76.39,"sales":0},{"date":"2026-04-03","inv":0,"trails":565.91,"sales":0},{"date":"2026-04-10","inv":0,"trails":774.68,"sales":0},{"date":"2026-04-17","inv":0,"trails":588.08,"sales":0}]},{"name":"Champika Eardly","team":"Akhil","weeks":[{"date":"2026-01-09","inv":0,"trails":1051.85,"sales":0},{"date":"2026-01-16","inv":0,"trails":49.8,"sales":0},{"date":"2026-01-23","inv":5953.45,"trails":305.64,"sales":0},{"date":"2026-01-30","inv":0,"trails":645.75,"sales":4305.99},{"date":"2026-02-06","inv":0,"trails":410.15,"sales":0},{"date":"2026-02-13","inv":346.23,"trails":400.04,"sales":0},{"date":"2026-02-20","inv":0,"trails":547.52,"sales":0},{"date":"2026-02-27","inv":1388.21,"trails":177.57,"sales":0},{"date":"2026-03-13","inv":0,"trails":898.17,"sales":0},{"date":"2026-03-27","inv":-744.81,"trails":432.52,"sales":0},{"date":"2026-04-03","inv":2068.72,"trails":455.07,"sales":0},{"date":"2026-04-10","inv":0,"trails":858.1,"sales":0},{"date":"2026-04-17","inv":0,"trails":237.97,"sales":4041.93}]}]};
+let RAW=[...FALLBACK[SHEET]];
+
+// ── State — default to YTD (All Months, All Weeks) ───────────────────────────
+let state={month:'All',week:'All',broker:'All',team:'All',view:'inv'};
+let chartInst=null;
+let tblSort={col:'rev',dir:'desc'};
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
+const fmt=v=>{
+  if(v==null)return'—';
+  const neg=v<0,av=Math.abs(v);
+  const s='$'+(av>=1e6?(av/1e6).toFixed(2)+'M':av>=1e3?Math.round(av/1e3)+'K':Math.round(av).toLocaleString());
+  return neg?'('+s+')':s;
+};
+function dateToMonth(d){return MONTHS[parseInt(d.split('-')[1])-1];}
+function filterWeeks(broker){
+  let w=[...broker.weeks];
+  if(state.month!=='All') w=w.filter(x=>x.month===state.month);
+  if(state.week!=='All')  w=w.filter(x=>x.date===state.week);
+  return w;
+}
+function brokerTotal(broker,key){return filterWeeks(broker).reduce((s,w)=>s+(w[key]||0),0);}
+function filteredBrokers(){
+  let rows=[...RAW];
+  rows=rows.filter(r=>!SKIP_NAMES.has(r.name.trim())&&r.team!=='GIM (via IA)');
+  if(GROUPED&&state.team!=='All') rows=rows.filter(r=>r.team===state.team);
+  if(state.broker!=='All') rows=rows.filter(r=>r.name===state.broker);
+  return rows;
+}
+
+// ── Live data fetch ──────────────────────────────────────────────────────────
+async function loadData(){
+  const btn=document.getElementById('refreshBtn');
+  if(btn){btn.classList.add('spinning');btn.querySelector('.rb-lbl').textContent='Refreshing…';}
+  try{
+    const resp=await fetch('./data.json?t='+Date.now());
+    if(!resp.ok) throw new Error('HTTP '+resp.status);
+    const json=await resp.json();
+    if(json[SHEET]&&json[SHEET].length) RAW=json[SHEET];
+    const updated=new Date(json.updated);
+    document.getElementById('lastUpdated').textContent=
+      'Updated '+updated.toLocaleString([],{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})+
+      ' · Auto-syncs every 4h';
+    document.querySelectorAll('.warn-banner').forEach(e=>e.remove());
+  }catch(e){
+    document.getElementById('lastUpdated').textContent='⚠ Cached data';
+    document.querySelectorAll('.warn-banner').forEach(e=>e.remove());
+    const warn=document.createElement('div');
+    warn.className='warn-banner';
+    warn.innerHTML=`<span>⚠ Live update unavailable. <small>${e.message}</small></span>
+      <button onclick="loadData()" style="padding:4px 12px;background:#b87214;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:11px;font-family:inherit">&#8635; Retry</button>`;
+    document.getElementById('app').insertBefore(warn,document.getElementById('app').firstChild);
+  }
+  if(btn){btn.classList.remove('spinning');btn.querySelector('.rb-lbl').textContent='Refresh';}
+  rebuildFilters();render();sendHeight();
+}
+
+// ── Filters ──────────────────────────────────────────────────────────────────
+function rebuildFilters(){
+  const allDates=[...new Set(RAW.flatMap(b=>b.weeks.map(w=>w.date)))].sort();
+  const availMonths=[...new Set(allDates.map(dateToMonth))];
+
+  const mSel=document.getElementById('monthSel');
+  mSel.innerHTML='<option value="All">All Months (YTD)</option>'+
+    availMonths.map(m=>`<option value="${m}"${m===state.month?' selected':''}>${m}</option>`).join('');
+  mSel.onchange=()=>{state.month=mSel.value;state.week='All';rebuildFilters();render();};
+
+  const wkDates=state.month==='All'?allDates:allDates.filter(d=>dateToMonth(d)===state.month);
+  const wSel=document.getElementById('weekSel');
+  wSel.innerHTML='<option value="All">All Weeks</option>'+
+    wkDates.map(d=>`<option value="${d}"${d===state.week?' selected':''}>${d}</option>`).join('');
+  wSel.onchange=()=>{state.week=wSel.value;render();};
+
+  
+  const teams=['All',...new Set(RAW.map(r=>r.team))].sort();
+  const tSel=document.getElementById('teamSel');
+  tSel.innerHTML=teams.map(t=>`<option value="${t}"${t===state.team?' selected':''}>${t==='All'?'All Teams':t}</option>`).join('');
+  tSel.onchange=()=>{state.team=tSel.value;state.broker='All';rebuildFilters();render();};
+  const bRows=state.team==='All'?RAW:RAW.filter(r=>r.team===state.team);
+  const bSel=document.getElementById('brokerSel');
+  bSel.innerHTML='<option value="All">All Brokers</option>'+
+    [...new Set(bRows.map(r=>r.name))].sort().map(n=>`<option value="${n}"${n===state.broker?' selected':''}>${n}</option>`).join('');
+  bSel.onchange=()=>{state.broker=bSel.value;render();};
+
+  const vEl=document.getElementById('viewTabs');vEl.innerHTML='';
+  VIEW_DEFS.forEach(v=>{
+    const b=document.createElement('button');
+    b.className='view-tab'+(state.view===v.id?' active':'');
+    b.textContent=v.lbl;b.dataset.vid=v.id;
+    b.onclick=()=>{state.view=v.id;render();};vEl.appendChild(b);
+  });
+}
+
+// ── Render ───────────────────────────────────────────────────────────────────
+function render(){
+  document.querySelectorAll('.view-tab').forEach(b=>b.classList.toggle('active',b.dataset.vid===state.view));
+  const rows=filteredBrokers();
+  const totS=rows.reduce((s,r)=>s+brokerTotal(r,'sales'),0);
+  const totI=rows.reduce((s,r)=>s+brokerTotal(r,'inv'),0);
+  const totR=rows.reduce((s,r)=>s+brokerTotal(r,REV_KEY),0);
+  const periodLbl=state.week!=='All'?state.week:(state.month!=='All'?state.month+' total':'Year to date');
+  const k1=document.getElementById('k1'),k2=document.getElementById('k2'),k3=document.getElementById('k3');
+  const k1s=document.getElementById('k1s'),k2s=document.getElementById('k2s'),k3s=document.getElementById('k3s');
+  if(k1){k1.textContent=fmt(totS);k1s.textContent=periodLbl;}
+  if(k2){k2.textContent=fmt(totI);k2s.textContent=INV_LABEL;}
+  if(k3){k3.textContent=fmt(totR);k3s.textContent=REV_LABEL;}
+  if(chartInst){chartInst.destroy();chartInst=null;}
+  const panel=document.getElementById('panel');
+  const key=state.view==='rev'?REV_KEY:state.view==='inv'?'inv':'sales';
+  if(state.view==='trend')renderTrend(rows,panel);
+  else if(state.view==='table')renderTable(rows,panel);
+  else renderBars(rows,key,panel);
+  sendHeight();
+}
+
+// ── Bar chart ─────────────────────────────────────────────────────────────────
+function barRow(name,v,maxV,color){
+  const neg=v<0,pct=(Math.abs(v)/maxV*100).toFixed(1);
+  return `<div class="bar-row">
+    <span class="bar-name">${name}</span>
+    <div class="bar-track"><div class="bar-fill" style="background:${neg?'#c03030':color};width:${pct}%"></div></div>
+    <span class="bar-val" style="color:${neg?'#c03030':color}">${fmt(v)}</span>
+  </div>`;
+}
+
+function renderBars(rows,key,panel){
+  const color=key==='inv'?ACCENT:key===REV_KEY?REV_COLOR:'#0d1b3e';
+  const label=key==='inv'?INV_LABEL:key===REV_KEY?REV_LABEL:'Sales (Written)';
+  let html=`<div class="legend"><span><span class="leg-dot" style="background:${color}"></span>${label}</span></div>`;
+  if(GROUPED){
+    const byTeam={};rows.forEach(r=>{if(!byTeam[r.team])byTeam[r.team]=[];byTeam[r.team].push(r);});
+    const maxV=Math.max(...rows.map(r=>Math.abs(brokerTotal(r,key))),1);
+    TEAM_ORDER.filter(t=>byTeam[t]).forEach(t=>{
+      const tTotal=byTeam[t].reduce((s,r)=>s+brokerTotal(r,key),0);
+      html+=`<div class="group-hdr"><span>${t}</span><span>${fmt(tTotal)}</span></div>`;
+      html+=byTeam[t].filter(r=>brokerTotal(r,key)!==0||true).sort((a,b)=>brokerTotal(b,key)-brokerTotal(a,key)).map(r=>barRow(r.name,brokerTotal(r,key),maxV,color)).join('');
+    });
+  }else{
+    const sorted=[...rows].map(r=>[r.name,brokerTotal(r,key)]).sort((a,b)=>b[1]-a[1]);
+    const maxV=Math.max(...sorted.map(x=>Math.abs(x[1])),1);
+    html+=sorted.map(([n,v])=>barRow(n,v,maxV,color)).join('');
+  }
+  panel.innerHTML=html||'<div class="no-data">No data for selected filters</div>';
+}
+
+// ── Trend ─────────────────────────────────────────────────────────────────────
+function renderTrend(rows,panel){
+  const allDates=[...new Set(rows.flatMap(r=>r.weeks.map(w=>w.date)))].sort();
+  if(!allDates.length){panel.innerHTML='<div class="no-data">No data</div>';return;}
+  const byMonth={};
+  allDates.forEach(d=>{
+    const m=dateToMonth(d);
+    if(!byMonth[m])byMonth[m]={sales:0,inv:0,rev:0};
+    rows.forEach(r=>{
+      const w=r.weeks.find(x=>x.date===d);if(!w)return;
+      byMonth[m].sales+=(w.sales||0);byMonth[m].inv+=(w.inv||0);byMonth[m].rev+=(w[REV_KEY]||0);
+    });
+  });
+  const months=MONTHS.filter(m=>byMonth[m]);
+  panel.innerHTML=`<div class="legend">
+    <span><span class="leg-dot" style="background:#0d1b3e"></span>Sales</span>
+    <span><span class="leg-dot" style="background:${ACCENT}"></span>Invoicing</span>
+    <span><span class="leg-dot" style="background:${REV_COLOR}"></span>Revenue</span>
+  </div><div class="chart-wrap"><canvas id="trendChart"></canvas></div>`;
+  setTimeout(()=>{
+    const ctx=document.getElementById('trendChart');if(!ctx)return;
+    chartInst=new Chart(ctx,{type:'bar',data:{labels:months,datasets:[
+      {label:'Sales',data:months.map(m=>byMonth[m].sales),backgroundColor:'#0d1b3e',borderRadius:3,categoryPercentage:.7,barPercentage:.3},
+      {label:'Invoicing',data:months.map(m=>byMonth[m].inv),backgroundColor:ACCENT,borderRadius:3,categoryPercentage:.7,barPercentage:.3},
+      {label:'Revenue',data:months.map(m=>byMonth[m].rev),backgroundColor:REV_COLOR,borderRadius:3,categoryPercentage:.7,barPercentage:.3}
+    ]},options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.dataset.label+': '+fmt(c.parsed.y)}}},
+      scales:{x:{grid:{display:false},ticks:{font:{size:11},color:'#6b7290'}},
+               y:{grid:{color:'rgba(0,0,0,0.04)'},ticks:{font:{size:10},color:'#6b7290',callback:v=>fmt(v)}}}}});
+    sendHeight();setTimeout(sendHeight,300);
+  },50);
+}
+
+// ── Table ─────────────────────────────────────────────────────────────────────
+function renderTable(rows,panel){
+  const getSortVal=r=>{
+    if(tblSort.col==='name')return r.name;
+    return brokerTotal(r,tblSort.col==='rev'?REV_KEY:tblSort.col==='inv'?'inv':'sales');
+  };
+  const sorted=[...rows].sort((a,b)=>{
+    const av=getSortVal(a),bv=getSortVal(b);
+    if(typeof av==='string')return tblSort.dir==='asc'?av.localeCompare(bv):bv.localeCompare(av);
+    return tblSort.dir==='asc'?av-bv:bv-av;
+  });
+  function thS(label,col){
+    const active=tblSort.col===col,arr=active?(tblSort.dir==='asc'?'↑':'↓'):'↕',clr=active?ACCENT:'#b0b4cc';
+    return `<th onclick="tblSort={col:'${col}',dir:(tblSort.col==='${col}'&&tblSort.dir==='desc')?'asc':'desc'};render()">${label} <span style="color:${clr};font-size:10px">${arr}</span></th>`;
+  }
+  const teamCol=GROUPED?'<th>Team</th>':'';
+  const tRows=sorted.map(r=>{
+    const s=brokerTotal(r,'sales'),inv=brokerTotal(r,'inv'),rev=brokerTotal(r,REV_KEY),wks=filterWeeks(r).length;
+    const tc=GROUPED?`<td><span class="badge">${r.team}</span></td>`:'';
+    return `<tr>${tc}<td style="font-weight:600">${r.name}</td>
+      <td class="num" style="color:#0d1b3e">${fmt(s)}</td>
+      <td class="num" style="color:${ACCENT}">${fmt(inv)}</td>
+      <td class="num" style="color:${REV_COLOR}">${fmt(rev)}</td>
+      <td class="num" style="color:#8a91b0">${wks}</td></tr>`;
+  }).join('');
+  const totS=rows.reduce((s,r)=>s+brokerTotal(r,'sales'),0);
+  const totI=rows.reduce((s,r)=>s+brokerTotal(r,'inv'),0);
+  const totR=rows.reduce((s,r)=>s+brokerTotal(r,REV_KEY),0);
+  const tc2=GROUPED?'<td></td>':'';
+  panel.innerHTML=`<div style="overflow-x:auto"><table>
+    <thead><tr>${teamCol}${thS('Broker','name')}${thS('Sales','sales')}${thS('Invoicing','inv')}${thS('Revenue','rev')}<th class="num">Wks</th></tr></thead>
+    <tbody>${tRows}</tbody>
+    <tfoot><tr>${tc2}<td>Total (${rows.length})</td><td class="num">${fmt(totS)}</td><td class="num">${fmt(totI)}</td><td class="num">${fmt(totR)}</td><td></td></tr></tfoot>
+  </table></div>`;
+}
+
+// ── Boot ──────────────────────────────────────────────────────────────────────
+const VIEW_DEFS=[{id:'inv',lbl:'Invoicing'},{id:'rev',lbl:'Revenue (Trails)'},{id:'sales',lbl:'Written (Sales)'},{id:'trend',lbl:'Trend'},{id:'table',lbl:'Table'}];
+document.addEventListener('DOMContentLoaded',()=>{
+  document.getElementById('lastUpdated').textContent='⚠ Cached data';
+  rebuildFilters();render();
+  loadData();
+  setInterval(loadData,4*60*60*1000);
+});
+</script>
+</body>
+</html>
